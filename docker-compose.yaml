@@ -9,29 +9,36 @@ services:
     restart: always
     tty: true
     expose:
-      - "8000/tcp"
+      - "8001/tcp"
     networks:
       - default
       - test_management
     ports:
-      - "${APP_PORT:-8000}:8000"
+      - "${APP_PORT:-8000}:8001"
     command: ["sh", "-c", "symfony serve"]
     volumes:
       - .:/var/www/html
     depends_on:
       - database
 
-  #  postgres:
-  #    image: postgres:15.0-alpine
-  #    restart: always
-  #    ports:
-  #      - "${DB_EXTERNAL_PORT:-5432}:5432"
-  #    environment:
-  #      POSTGRES_DB: ${DB_DATABASE:-test-management}
-  #      POSTGRES_USER: ${DB_USERNAME:-root}
-  #      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
-  #    volumes:
-  #      - 'postgres_data:/var/lib/postgresql/data'
+  centrifugo:
+    container_name: centrifugo
+    image: centrifugo/centrifugo:v5
+    volumes:
+      - ./.docker/centrifugo/config.json:/centrifugo/config.json
+    command: centrifugo -c config.json
+    links:
+      - php
+    expose:
+      - "8000/tcp"
+    ports:
+      - 8000:8000
+    networks:
+      - test_management
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
 
   ##> doctrine/doctrine-bundle ###
   database:
